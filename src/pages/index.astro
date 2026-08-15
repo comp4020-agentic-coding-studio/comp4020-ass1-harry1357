@@ -1,10 +1,12 @@
-<!doctype html>
+---
+import "../styles/global.css";
+---
+
 <html lang="en-AU">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>COMP4020 prototype</title>
-    <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
     <header>
@@ -19,6 +21,11 @@
         <code>spec/README.md</code> explains how the checks in this repo relate to it.
       </p>
     </main>
-    <script type="module" src="./main.ts"></script>
+    <script>
+      const intro = document.querySelector<HTMLElement>('[data-testid="intro"]');
+      if (intro) {
+        intro.dataset.ready = "true";
+      }
+    </script>
   </body>
 </html>
