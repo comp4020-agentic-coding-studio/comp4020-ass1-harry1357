@@ -1,83 +1,61 @@
 # Process overview
 
-<!-- TEMPLATE: this file is a shape to fill in, not a form. Replace everything
-     in it with your own overview, and delete this comment — `pnpm
-     check:evidence` will remind you if it's still here. -->
-
-A reading-guide to how the work came together --- a map to your process, not an
-essay about it. Markers read this file and follow its citations; they don't
-trawl the repo for evidence you didn't point at, so if a moment mattered, cite
-it.
-
-This file is the shape; the course site's
-[assessment page](https://comp.anu.edu.au/courses/comp4020-agentic-coding-studio/topics/assessment/#what-you-submit)
-is the requirement, and each brief adds its own word count and moment count.
-
 ## What I built
 
-One paragraph: the thing, and the idea behind it.
+An interactive explainer arguing one claim about Final Fantasy X's turn system:
+Haste doesn't make your counter tick down faster. Every counter drops by exactly
+1 on every global tick, always — Haste halves the value the counter _resets to_
+after you act. Same visible outcome, completely different machine. Three dials,
+an Agility slider and a Haste switch on each, and a tick ledger you can read the
+rate off directly
+([`9f75c7f...ce29e9e`](https://github.com/comp4020-agentic-coding-studio/comp4020-ass1-harry1357/compare/9f75c7f...ce29e9e)).
 
 ## The moments that mattered
 
-Three or four for an assignment; fewer is fine for a weekly prototype. Keep the
-list short so each moment has room to do all four jobs:
+### I didn't trust the tests until I broke them on purpose
 
-1. **what happened** --- the problem, or the thing the agent got wrong
-2. **what you did instead of the obvious thing** --- the call you made, and why
-   it beat the obvious one
-3. **how you knew it was right** --- the check you ran, the viewport you looked
-   at, what you read before accepting the diff
-4. **the citation** --- a commit or commit range, a `CLAUDE.md` change, a check
-   that went from red to green, a prompt paired with the commit it produced
+The obvious test for Haste is "a hasted unit takes more turns", and it passes.
+It's also worthless: the misconception predicts exactly the same turn counts, so
+counting turns cannot tell the two stories apart. Rather than write more tests, I
+reimplemented the misconception in the engine — Haste decrements 2 per tick, no
+reset halving — and re-ran the suite. Seven tests went red, and "hasted gets
+twice the turns" **still passed**. That told me which assertions were actually
+load-bearing. The engine is pure and DOM-free precisely so that experiment was a
+one-line change
+([`a988a4d`](https://github.com/comp4020-agentic-coding-studio/comp4020-ass1-harry1357/commit/a988a4d)).
 
-Jobs 2 and 3 are the ones the repo can't tell a reader on its own, so they're
-where the marks are. The strongest moments are the ones where a correction
-landed in the **harness** rather than in another prompt --- a rule added to
-`CLAUDE.md`, a check wired up, an attempt thrown away: re-prompting until it
-passes is the routine case, and changing what the agent works against is the
-skilled one.
+### My measuring instrument was lying to me
 
-Cite each moment as a link whose text is the commit hash or range and whose
-target is this repo's commit or compare URL, so a reader clicks straight to the
-evidence:
+I was checking phone layout with a headless-Chrome probe that reported clean
+numbers: scrollWidth 390, nothing overflowing. Then I printed the iframe's actual
+`innerWidth` — 300, with the outer window at 756. The shell is zsh, which doesn't
+word-split unquoted variables, so `set -- $spec` passed a single argument and
+Chrome silently ignored a malformed `--window-size`. I had been reading confident
+measurements of a viewport I had never rendered. The fix that mattered wasn't the
+loop; it was the rule in `CLAUDE.md` telling the next probe to assert its own
+viewport before I believe its output
+([`a988a4d`](https://github.com/comp4020-agentic-coding-studio/comp4020-ass1-harry1357/commit/a988a4d)).
 
-- one commit: [`a1b2c3d`](https://github.com/YOUR-ORG/YOUR-REPO/commit/a1b2c3d)
-- a range:
-  [`a1b2c3d...e4f5a6b`](https://github.com/YOUR-ORG/YOUR-REPO/compare/a1b2c3d...e4f5a6b)
+### Cutting a real mechanic, and saying so
 
-To pair a prompt with the commit it produced, quote the prompt (curated, not a
-full transcript) next to the citation:
+In the actual game a Haste cast also halves your _current_ counter. I left it
+out — not to simplify, but because the reset multiplier alone is what produces
+the pause where you flip the switch and nothing happens until the next turn, and
+that pause is the entire proof. Adding the catch-up would have hidden it. The
+call I had to make was what to do about the gap: an undisclosed omission, on a
+page staking itself on accuracy, reads as an error. So it's on the page as a "One
+simplification" note, and twice in the engine — including on `setHaste`, the
+one-line change that would silently undo it
+([`230aa2e`](https://github.com/comp4020-agentic-coding-studio/comp4020-ass1-harry1357/commit/230aa2e)).
 
-> the prompt, verbatim
+### The screenshot that showed the page arguing against itself
 
-Screenshots are welcome where one carries the verification better than a
-sentence does. Commit the file to this repo and link it with a **relative**
-path, which is what makes it render on GitHub: `![alt text](docs/before.png)`.
-Images don't count towards the word count and don't replace the citation.
-
-### A worked moment, for shape
-
-Delete this section along with the rest of the boilerplate --- it's here to show
-the four jobs in one paragraph, not to be imitated in content.
-
-> The date formatter kept coming back with `toLocaleDateString()` and no locale
-> argument, so the same build rendered differently on my machine and in CI. I'd
-> already re-prompted it twice, which fixed the line but not the habit, so the
-> third time I put the rule in `CLAUDE.md` instead
-> ([`3f9ac21`](https://github.com/YOUR-ORG/YOUR-REPO/commit/3f9ac21)) and added
-> a spec test that fails on a bare `toLocaleDateString`. That's what told me it
-> had actually taken: the test went red against the old code and green against
-> the new, and the next two features it wrote passed it without prompting
-> ([`3f9ac21...b7e0d14`](https://github.com/YOUR-ORG/YOUR-REPO/compare/3f9ac21...b7e0d14)).
-
-## Before you ship
-
-`pnpm check:evidence` verifies your citations resolve to real commits, that the
-current reflection entry is in `reflections/`, and that your `CLAUDE.md` is
-there --- before a marker ever opens the file. It checks that your map is
-traceable, not that it is good: the marker judges whether your small,
-deliberately chosen set of moments shows real judgement and reflection. A green
-check is not a substitute for that curation.
-
-Images are deliberately not checked, because whether one renders is visible the
-moment you look. Open this file on GitHub and look at it before you ship.
+Late on I screenshotted the exact frame I'd be presenting from: Haste just
+flipped. The ring had turned brass immediately — which reads as "something
+changed" at the precise moment the page needs to say "nothing has changed yet",
+because the ring on screen is still the un-hasted cycle. The obvious fix was CSS.
+I changed the model instead: combatants now carry `cycleHasted`, whether the
+reset that produced the current ring was a hasted one, and the dial is coloured
+by that rather than by the status flag. A preview scale now draws the halved ring
+a full cycle before it lands. Two tests hold it there
+([`ce29e9e`](https://github.com/comp4020-agentic-coding-studio/comp4020-ass1-harry1357/commit/ce29e9e)).
