@@ -22,7 +22,7 @@ import {
   type SimState,
   type TickEvent,
 } from "./ctb.ts";
-import { dialTicksMarkup, notchAngle, remainingArc } from "./dial.ts";
+import { dialTicksMarkup, ghostTicksMarkup, notchAngle, remainingArc } from "./dial.ts";
 
 export const TICK_MS = 320;
 export const LEDGER_ROWS = 7;
@@ -51,6 +51,7 @@ interface ChannelElements {
   readonly agilityValue: HTMLElement;
   readonly haste: HTMLElement;
   readonly ticks: SVGGElement;
+  readonly ghost: SVGGElement;
   readonly arc: SVGPathElement;
   readonly notch: SVGGElement;
   readonly counter: HTMLElement;
@@ -105,6 +106,7 @@ export function initSimulator(
         agilityValue: need<HTMLElement>(element, "[data-agility-value]"),
         haste: need<HTMLElement>(element, "[data-haste]"),
         ticks: need<SVGGElement>(element, "[data-dial-ticks]"),
+        ghost: need<SVGGElement>(element, "[data-dial-ghost]"),
         arc: need<SVGPathElement>(element, "[data-dial-arc]"),
         notch: need<SVGGElement>(element, "[data-dial-notch]"),
         counter: need<HTMLElement>(element, "[data-counter]"),
@@ -153,6 +155,9 @@ export function initSimulator(
 
     channel.root.dataset.hasted = String(hasted);
     channel.root.dataset.acting = String(acted);
+    // The ring is coloured by the reset that produced it, not by the status
+    // flag, so brass never appears on a cycle that is not actually halved.
+    channel.root.dataset.cycleHasted = String(combatant.cycleHasted);
     // The dial is still scaled to the cycle it is in; a Haste toggled mid-cycle
     // only lands on the next action. Flagging that lets the CSS say so.
     channel.root.dataset.pending = String(next !== combatant.cycle);
@@ -160,6 +165,14 @@ export function initSimulator(
     if (channel.ticks.dataset.cycle !== String(combatant.cycle)) {
       channel.ticks.innerHTML = dialTicksMarkup(combatant.cycle);
       channel.ticks.dataset.cycle = String(combatant.cycle);
+    }
+
+    // The preview scale: what this ring becomes at the next reset. Drawn for
+    // the whole cycle before it happens, and cleared the moment it lands.
+    const ghostKey = `${next}/${combatant.cycle}`;
+    if (channel.ghost.dataset.key !== ghostKey) {
+      channel.ghost.innerHTML = ghostTicksMarkup(next, combatant.cycle);
+      channel.ghost.dataset.key = ghostKey;
     }
 
     channel.arc.setAttribute("d", remainingArc(combatant.counter, combatant.cycle));

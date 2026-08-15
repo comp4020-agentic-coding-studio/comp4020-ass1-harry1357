@@ -16,10 +16,24 @@ export const VIEW_BOX = 100;
 const CENTRE = VIEW_BOX / 2;
 
 export const ARC_RADIUS = 41;
-const TICK_OUTER = 37;
-const TICK_MINOR_INNER = 33;
-const TICK_MAJOR_INNER = 29;
 export const BEZEL_RADIUS = 28;
+
+interface TickBand {
+  readonly outer: number;
+  readonly minorInner: number;
+  readonly majorInner: number;
+}
+
+/** The live scale: one tooth per tick of the cycle the counter is in now. */
+const SCALE_BAND: TickBand = { outer: 37, minorInner: 33, majorInner: 29 };
+
+/**
+ * The preview scale, sitting outside the arc: the ring this combatant will get
+ * at its next reset, when that differs from the one it is on. Under Haste it
+ * has half the teeth, and it is visible for the whole cycle *before* anything
+ * happens — which is the page's argument, drawn a beat early.
+ */
+const GHOST_BAND: TickBand = { outer: 48.5, minorInner: 44, majorInner: 44 };
 
 /** Beyond this many teeth the ring stops being countable, so the scale coarsens. */
 const MAX_TEETH = 60;
@@ -51,14 +65,14 @@ export interface DialTick {
 }
 
 /** One mark per remaining tick, every fifth one long. */
-export function dialTicks(cycle: number): DialTick[] {
+export function dialTicks(cycle: number, band: TickBand = SCALE_BAND): DialTick[] {
   const teeth = Math.min(MAX_TEETH, Math.max(1, Math.round(cycle)));
   return Array.from({ length: teeth }, (_, index) => {
     const major = index % 5 === 0;
-    const [x1, y1] = point((index / teeth) * 360, TICK_OUTER);
+    const [x1, y1] = point((index / teeth) * 360, band.outer);
     const [x2, y2] = point(
       (index / teeth) * 360,
-      major ? TICK_MAJOR_INNER : TICK_MINOR_INNER,
+      major ? band.majorInner : band.minorInner,
     );
     return { x1, y1, x2, y2, major };
   });
@@ -97,5 +111,13 @@ export function dialTicksMarkup(cycle: number): string {
           major ? "dial-tooth is-major" : "dial-tooth"
         }" />`,
     )
+    .join("");
+}
+
+/** The preview scale. Empty string when there is nothing pending to preview. */
+export function ghostTicksMarkup(pendingCycle: number, currentCycle: number): string {
+  if (pendingCycle === currentCycle) return "";
+  return dialTicks(pendingCycle, GHOST_BAND)
+    .map(({ x1, y1, x2, y2 }) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" />`)
     .join("");
 }

@@ -187,6 +187,27 @@ describe("the mechanism: Haste moves the reset, and only the reset", () => {
   });
 });
 
+describe("the mechanism, as the dial reports it", () => {
+  it("keeps the ring flagged un-hasted until the halved reset actually lands", () => {
+    let state = createSim([{ id: "u", name: "Unit", agility: 98, haste: "normal" }]);
+    expect(state.combatants[0]?.cycleHasted).toBe(false);
+    expect(state.combatants[0]?.cycle).toBe(12);
+
+    state = setHaste(state, "u", "haste");
+
+    // The status is on, but the ring on screen is still the un-hasted one, so
+    // the dial must not yet claim otherwise.
+    expect(state.combatants[0]?.haste).toBe("haste");
+    expect(state.combatants[0]?.cycleHasted).toBe(false);
+    expect(state.combatants[0]?.cycle).toBe(12);
+
+    state = run(state, 12);
+
+    expect(state.combatants[0]?.cycleHasted).toBe(true);
+    expect(state.combatants[0]?.cycle).toBe(6);
+  });
+});
+
 describe("the visible effect the mechanism produces", () => {
   it("gives higher Agility more turns over the same number of ticks", () => {
     const state = run(
@@ -336,6 +357,34 @@ describe("the core interaction, in the built page", () => {
     expect(text(channel, "[data-turns]")).toBe("1");
     expect(channel.getAttribute("data-pending")).toBe("false");
     expect(el(channel, "[data-dial-ticks]").childElementCount).toBe(6);
+  });
+
+  it("previews the ring it will reset to, for exactly as long as it is pending", () => {
+    const channel = el(doc, '[data-unit="b"]');
+    const ghost = el(channel, "[data-dial-ghost]");
+    const scale = el(channel, "[data-dial-ticks]");
+
+    expect(ghost.childElementCount, "nothing to preview at rest").toBe(0);
+    expect(scale.childElementCount).toBe(12);
+    expect(channel.getAttribute("data-cycle-hasted")).toBe("false");
+
+    el<HTMLButtonElement>(channel, "[data-haste]").click();
+
+    // The whole argument in one assertion: the preview has half the teeth of
+    // the ring standing next to it, and that ring has not changed.
+    expect(scale.childElementCount, "the live ring is untouched").toBe(12);
+    expect(ghost.childElementCount, "the preview is the halved ring").toBe(6);
+    expect(
+      channel.getAttribute("data-cycle-hasted"),
+      "brass must not appear on a ring that is not yet halved",
+    ).toBe("false");
+
+    const step = el<HTMLButtonElement>(doc, "[data-step]");
+    for (let i = 0; i < 12; i += 1) step.click();
+
+    expect(scale.childElementCount, "and now it is the halved ring").toBe(6);
+    expect(ghost.childElementCount, "so there is nothing left to preview").toBe(0);
+    expect(channel.getAttribute("data-cycle-hasted")).toBe("true");
   });
 
   it("re-derives tick speed and the next reset when the visitor drags Agility", () => {

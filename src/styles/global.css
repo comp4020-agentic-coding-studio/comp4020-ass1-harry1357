@@ -453,20 +453,38 @@ h2 {
   text-transform: uppercase;
 }
 
-/* Haste is brass, everywhere and nowhere else. */
-.channel[data-hasted="true"] .dial-arc {
+/* The preview scale, outside the arc: the ring this unit resets to next. It is
+   visible for the whole cycle before anything happens, which is the point. */
+.dial-ghost line {
+  stroke: var(--accent);
+  stroke-width: 1.7;
+  opacity: 0.72;
+}
+
+.channel[data-hasted="true"] .dial-ghost line {
   stroke: var(--haste);
 }
 
-.channel[data-hasted="true"] .dial-index {
+/* Brass means "this ring is the halved one", never merely "the switch is on" —
+   so the live arc stays cyan until the hasted reset actually lands. */
+.channel[data-cycle-hasted="true"] .dial-arc {
+  stroke: var(--haste);
+}
+
+.channel[data-cycle-hasted="true"] .dial-index {
   fill: var(--haste);
+}
+
+/* One tick of emphasis on the turn itself, so turns are legible at a glance. */
+.channel[data-acting="true"] .dial-arc {
+  stroke-width: 3.8;
 }
 
 .channel[data-acting="true"] .dial-counter {
   color: var(--accent);
 }
 
-.channel[data-hasted="true"][data-acting="true"] .dial-counter {
+.channel[data-cycle-hasted="true"][data-acting="true"] .dial-counter {
   color: var(--haste);
 }
 
@@ -589,7 +607,9 @@ input[type="range"]::-moz-range-thumb {
 .formula-pending {
   display: none;
   color: var(--haste);
-  font-size: 0.76rem;
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
 .channel[data-hasted="true"] .formula-result {

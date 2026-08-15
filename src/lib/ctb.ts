@@ -116,6 +116,14 @@ export interface Combatant extends CombatantConfig {
    * action, which is exactly the thing the page is trying to show you.
    */
   readonly cycle: number;
+  /**
+   * Whether the reset that produced the current cycle was a hasted one. Not the
+   * same as `haste === "haste"`: flip the switch mid-cycle and the status is on
+   * while the ring you are looking at is still the un-hasted one. The page
+   * colours the dial by this, not by the status, so brass on the ring always
+   * means "this ring is the halved one" rather than "the flag is set".
+   */
+  readonly cycleHasted: boolean;
   readonly turns: number;
 }
 
@@ -151,7 +159,13 @@ export function createSim(configs: readonly CombatantConfig[]): SimState {
     tick: 0,
     combatants: configs.map((config) => {
       const start = pendingReset(config);
-      return { ...config, counter: start, cycle: start, turns: 0 };
+      return {
+        ...config,
+        counter: start,
+        cycle: start,
+        cycleHasted: config.haste === "haste",
+        turns: 0,
+      };
     }),
   };
 }
@@ -177,7 +191,13 @@ export function advance(state: SimState): TickResult {
     events.push({ id: combatant.id, before, after, acted, reset });
 
     if (reset === null) return { ...combatant, counter: after };
-    return { ...combatant, counter: reset, cycle: reset, turns: combatant.turns + 1 };
+    return {
+      ...combatant,
+      counter: reset,
+      cycle: reset,
+      cycleHasted: combatant.haste === "haste",
+      turns: combatant.turns + 1,
+    };
   });
 
   return { state: { tick: state.tick + 1, combatants }, events };

@@ -10,7 +10,7 @@ import {
   tickSpeed,
   type CombatantConfig,
 } from "../lib/ctb.ts";
-import { dialTicksMarkup, notchAngle, remainingArc } from "../lib/dial.ts";
+import { dialTicksMarkup, ghostTicksMarkup, notchAngle, remainingArc } from "../lib/dial.ts";
 import "../styles/global.css";
 
 // The roster is rendered at build time and read back out of the markup by the
@@ -24,6 +24,9 @@ const roster: readonly CombatantConfig[] = [
 
 const start = createSim(roster);
 const letters = ["A", "B", "C"];
+
+const FONTS_HREF =
+  "https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400..600&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap";
 ---
 
 <html lang="en-AU">
@@ -37,10 +40,12 @@ const letters = ["A", "B", "C"];
     <title>Haste doesn&rsquo;t speed up the clock &mdash; an FFX turn-order instrument</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400..600&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap"
-    />
+    {/* Loaded without blocking first paint: a third-party stylesheet that is
+        merely slow (rather than blocked) would otherwise hold the page on a
+        blank screen. The fallback stacks in global.css carry the page until the
+        webfonts land, and the whole thing is legible without them. */}
+    <link rel="preload" as="style" href={FONTS_HREF} onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript><link rel="stylesheet" href={FONTS_HREF} /></noscript>
   </head>
 
   <body>
@@ -81,7 +86,8 @@ const letters = ["A", "B", "C"];
             <p class="section-lede">
               One tooth on the ring is one tick, the bright arc is what this unit has
               left, and it acts when the notch reaches the index mark at the top. Switch
-              Haste on and watch what does &mdash; and doesn&rsquo;t &mdash; change.
+              Haste on: faint marks outside the ring preview what it resets to next
+              &mdash; and nothing else moves until that unit takes its turn.
             </p>
           </div>
 
@@ -114,6 +120,7 @@ const letters = ["A", "B", "C"];
                     data-hasted="false"
                     data-acting="false"
                     data-pending="false"
+                    data-cycle-hasted="false"
                   >
                     <div class="channel-head">
                       <h3 class="channel-name">
@@ -150,6 +157,12 @@ const letters = ["A", "B", "C"];
                           data-dial-ticks
                           data-cycle={String(unit.cycle)}
                           set:html={dialTicksMarkup(unit.cycle)}
+                        />
+                        <g
+                          class="dial-ghost"
+                          data-dial-ghost
+                          data-key={`${next}/${unit.cycle}`}
+                          set:html={ghostTicksMarkup(next, unit.cycle)}
                         />
                         <circle class="dial-bezel" cx="50" cy="50" r="28" />
                         <path class="dial-index" d="M 50 8 L 46.6 0.9 L 53.4 0.9 Z" />
@@ -207,7 +220,7 @@ const letters = ["A", "B", "C"];
                           {next}
                         </span>
                       </span>
-                      <span class="formula-pending">not until this unit&rsquo;s next turn</span>
+                      <span class="formula-pending">pending &middot; on the next turn</span>
                     </p>
                   </article>
                 );
