@@ -1,2 +1,825 @@
-/* Your prototype's CSS goes here. This file exists so the lint sensor has
-   something to check from day one. */
+/* An old technical instrument being studied, not a game menu: hairline
+   linework, flat surfaces, square corners, and one accent doing one job.
+   Cyan is the instrument. Brass is Haste, and only Haste. */
+
+:root {
+  --bg: #0b1220;
+  --panel: #131b2e;
+  --accent: #7fe7d4;
+  --haste: #f2c879;
+  --text: #e8ecf2;
+  --muted: #7a879c;
+  --line: color-mix(in srgb, var(--muted) 26%, var(--panel));
+  --line-strong: color-mix(in srgb, var(--muted) 48%, var(--panel));
+  --font-serif: "Fraunces", georgia, "Times New Roman", serif;
+  --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", helvetica, arial, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, sfmono-regular, menlo, consolas, monospace;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  line-height: 1.62;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-weight: 500;
+  line-height: 1.12;
+  letter-spacing: -0.015em;
+}
+
+p {
+  margin: 0;
+}
+
+a {
+  color: var(--accent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.25em;
+}
+
+/* One focus style for the whole page, so nothing can be reached by keyboard
+   without showing where you are. */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.wrap {
+  inline-size: min(100% - 2.5rem, 74rem);
+  margin-inline: auto;
+}
+
+.visually-hidden {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Mono is reserved for values the simulation produces. If it is set in this
+   face, it is a number you can check. */
+.num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}
+
+/* ---------- top bar ---------- */
+
+.topbar {
+  border-block-end: 1px solid var(--line);
+}
+
+.topbar-inner {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.5rem;
+  align-items: center;
+  justify-content: space-between;
+  padding-block: 0.9rem;
+}
+
+.topbar-mark {
+  color: var(--muted);
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.topbar nav {
+  display: flex;
+  gap: 1.25rem;
+}
+
+.topbar nav a {
+  color: var(--muted);
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+.topbar nav a:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+/* ---------- hero ---------- */
+
+.hero {
+  padding-block: clamp(2.25rem, 5vw, 3.25rem) clamp(1.25rem, 2.5vw, 1.75rem);
+}
+
+.hero-inner {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.hero-copy {
+  display: grid;
+  gap: 1rem;
+  align-content: end;
+}
+
+.eyebrow {
+  color: var(--muted);
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+h1 {
+  max-inline-size: 20ch;
+  font-size: clamp(2.1rem, 5.6vw, 4rem);
+}
+
+.hero-turn {
+  display: block;
+  color: var(--accent);
+}
+
+.hero-lede {
+  max-inline-size: 62ch;
+  font-size: clamp(1rem, 1.15vw, 1.13rem);
+}
+
+.hero-lede em {
+  color: var(--accent);
+  font-style: normal;
+}
+
+/* Wide enough for two columns: the claim on the left, the explanation beside
+   it rather than under it, so the dials clear the fold at 1920x1080. */
+@media (width >= 62rem) {
+  .hero-inner {
+    gap: 1.4rem 3.5rem;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+    align-items: end;
+  }
+
+  .eyebrow {
+    grid-column: 1 / -1;
+  }
+
+  h1 {
+    max-inline-size: none;
+    grid-row: 2;
+  }
+
+  .hero-copy {
+    grid-row: 2;
+    grid-column: 2;
+  }
+}
+
+/* ---------- the instrument ---------- */
+
+.instrument {
+  padding-block: clamp(1rem, 2vw, 1.5rem) clamp(3rem, 6vw, 5rem);
+}
+
+.section-head {
+  display: grid;
+  gap: 0.65rem;
+}
+
+h2 {
+  font-size: clamp(1.5rem, 2.4vw, 2rem);
+}
+
+.section-lede {
+  max-inline-size: 78ch;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.transport {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.25rem;
+  align-items: center;
+  justify-content: space-between;
+  margin-block: 1.25rem;
+  padding-block: 0.85rem;
+  border-block: 1px solid var(--line);
+}
+
+.transport-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.button {
+  padding-block: 0.5rem;
+  padding-inline: 0.9rem;
+  border: 1px solid var(--muted);
+  background: none;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.76rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.button:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.transport-tick {
+  display: flex;
+  gap: 0.6rem;
+  align-items: baseline;
+}
+
+.transport-tick-label {
+  color: var(--muted);
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.transport-tick-value {
+  font-size: 1.4rem;
+}
+
+.channels {
+  display: grid;
+  gap: 1.25rem;
+  grid-template-columns: repeat(auto-fit, minmax(16.5rem, 1fr));
+}
+
+.channel {
+  display: grid;
+  gap: 1.1rem;
+  align-content: start;
+  padding-block: 1.35rem;
+  padding-inline: 1.35rem;
+  border: 1px solid var(--line);
+  background-color: var(--panel);
+}
+
+.channel-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.channel-name {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.channel-letter {
+  padding-block: 0.05rem;
+  padding-inline: 0.4rem;
+  border: 1px solid var(--line-strong);
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+/* ---------- the haste switch ---------- */
+
+.haste-toggle {
+  display: inline-flex;
+  gap: 0.55rem;
+  align-items: center;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font-family: inherit;
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.haste-track {
+  position: relative;
+  display: block;
+  inline-size: 38px;
+  block-size: 18px;
+  border: 1px solid var(--muted);
+}
+
+.haste-knob {
+  position: absolute;
+  inset-block-start: 3px;
+  inset-inline-start: 3px;
+  inline-size: 12px;
+  block-size: 10px;
+  background-color: var(--muted);
+  transition: transform 120ms linear, background-color 120ms linear;
+}
+
+.haste-toggle:hover {
+  color: var(--haste);
+}
+
+.haste-toggle[aria-checked="true"] {
+  color: var(--haste);
+}
+
+.haste-toggle[aria-checked="true"] .haste-track {
+  border-color: var(--haste);
+}
+
+.haste-toggle[aria-checked="true"] .haste-knob {
+  background-color: var(--haste);
+  transform: translateX(21px);
+}
+
+/* ---------- the dial ---------- */
+
+.dial-wrap {
+  container-type: inline-size;
+  position: relative;
+  inline-size: min(100%, 13.5rem);
+  margin-inline: auto;
+}
+
+.dial {
+  display: block;
+  inline-size: 100%;
+  block-size: auto;
+}
+
+.dial-track {
+  fill: none;
+  stroke: var(--line);
+  stroke-width: 1;
+}
+
+.dial-bezel {
+  fill: none;
+  stroke: var(--line);
+  stroke-width: 0.6;
+}
+
+.dial-arc {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2.6;
+}
+
+/* One tooth per tick. Counting them is the argument, so they have to be
+   legible, not decorative. */
+.dial-tooth {
+  stroke: var(--muted);
+  stroke-width: 0.9;
+}
+
+.dial-tooth.is-major {
+  stroke: var(--muted);
+  stroke-width: 1.5;
+}
+
+.dial-index {
+  fill: var(--muted);
+}
+
+.dial-notch {
+  transform-box: view-box;
+  transform-origin: 50% 50%;
+  transition: transform 90ms linear;
+}
+
+.dial-notch line {
+  stroke: var(--text);
+  stroke-width: 1.7;
+}
+
+.dial-notch circle {
+  fill: var(--text);
+}
+
+/* Reset winds the needle back to zero; easing that would spin it backwards. */
+[data-settling] .dial-notch {
+  transition: none;
+}
+
+.dial-readout {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  align-items: center;
+  justify-content: center;
+}
+
+.dial-counter {
+  font-size: 20cqw;
+  line-height: 1;
+}
+
+.dial-unit {
+  color: var(--muted);
+  font-size: 5.4cqw;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+/* Haste is brass, everywhere and nowhere else. */
+.channel[data-hasted="true"] .dial-arc {
+  stroke: var(--haste);
+}
+
+.channel[data-hasted="true"] .dial-index {
+  fill: var(--haste);
+}
+
+.channel[data-acting="true"] .dial-counter {
+  color: var(--accent);
+}
+
+.channel[data-hasted="true"][data-acting="true"] .dial-counter {
+  color: var(--haste);
+}
+
+/* ---------- tally, control, formula ---------- */
+
+.channel-turns {
+  display: flex;
+  gap: 0.6rem;
+  align-items: baseline;
+  justify-content: center;
+  padding-block: 0.7rem;
+  border-block: 1px solid var(--line);
+}
+
+.channel-turns-value {
+  font-size: 1.5rem;
+}
+
+.channel-turns-label {
+  color: var(--muted);
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.control {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.control-head {
+  display: flex;
+  gap: 0.75rem;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.control-head label {
+  color: var(--muted);
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.control-value {
+  font-size: 1rem;
+}
+
+input[type="range"] {
+  inline-size: 100%;
+  block-size: 1.5rem;
+  margin: 0;
+  appearance: none;
+  background: none;
+  cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-runnable-track {
+  block-size: 2px;
+  background-color: var(--muted);
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  inline-size: 10px;
+  block-size: 18px;
+  margin-block-start: -8px;
+  border: 0;
+  appearance: none;
+  background-color: var(--accent);
+}
+
+input[type="range"]::-moz-range-track {
+  block-size: 2px;
+  background-color: var(--muted);
+}
+
+input[type="range"]::-moz-range-thumb {
+  inline-size: 10px;
+  block-size: 18px;
+  border: 0;
+  border-radius: 0;
+  background-color: var(--accent);
+}
+
+.formula {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.formula-label {
+  color: var(--muted);
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.formula-expr {
+  font-size: 1rem;
+}
+
+.formula-op {
+  color: var(--muted);
+  padding-inline: 0.15em;
+}
+
+.formula-result {
+  color: var(--accent);
+}
+
+.haste-factor {
+  color: inherit;
+}
+
+/* In prose the haste term is always the halved one, so it is always brass.
+   In a channel's formula it reads "1" until Haste is switched on. */
+.mechanism .haste-factor {
+  color: var(--haste);
+}
+
+.formula-pending {
+  display: none;
+  color: var(--haste);
+  font-size: 0.76rem;
+}
+
+.channel[data-hasted="true"] .formula-result {
+  color: var(--haste);
+}
+
+.channel[data-hasted="true"] .haste-factor {
+  color: var(--haste);
+}
+
+.channel[data-pending="true"] .formula-pending {
+  display: block;
+}
+
+/* ---------- the ledger ---------- */
+
+.ledger-block {
+  display: grid;
+  gap: 0.7rem;
+  margin-block-start: 2rem;
+}
+
+h3 {
+  font-size: 1.05rem;
+}
+
+.ledger-note {
+  max-inline-size: 70ch;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.ledger {
+  display: grid;
+  gap: 0;
+  max-inline-size: 34rem;
+  margin: 0;
+  padding: 0;
+  border-block-start: 1px solid var(--line);
+  list-style: none;
+}
+
+.ledger-row {
+  display: grid;
+  gap: 0.4rem;
+  grid-template-columns: 3.4rem repeat(3, minmax(0, 1fr));
+  align-items: baseline;
+  padding-block: 0.34rem;
+  border-block-end: 1px solid var(--line);
+}
+
+.ledger-tick {
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  letter-spacing: 0.04em;
+}
+
+.ledger-cell {
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  font-variant-numeric: tabular-nums;
+  white-space: pre;
+}
+
+.ledger-cell.is-acting {
+  color: var(--accent);
+}
+
+.ledger-cell.is-hasted {
+  color: var(--haste);
+}
+
+.ledger-empty {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-style: italic;
+}
+
+.ledger:not(:empty) ~ .ledger-empty {
+  display: none;
+}
+
+/* ---------- the mechanism ---------- */
+
+.mechanism {
+  padding-block: clamp(2.5rem, 5vw, 4rem) clamp(3rem, 6vw, 5rem);
+  border-block-start: 1px solid var(--line);
+}
+
+/* Deliberately not on the same element as .wrap: .wrap centres its box, so a
+   max-inline-size here would centre the prose column and break the left edge
+   every other section shares. */
+.mechanism-inner {
+  display: grid;
+  gap: 1.35rem;
+  max-inline-size: 68ch;
+}
+
+.equation-rhs {
+  display: inline-block;
+}
+
+.mechanism p {
+  font-size: 1.02rem;
+}
+
+.lead-out {
+  color: var(--muted);
+}
+
+.equation {
+  margin-block: 0.5rem;
+  padding-block: 1.4rem;
+  border-block: 1px solid var(--line);
+  text-align: center;
+}
+
+.terms {
+  margin: 0;
+  border-block-end: 1px solid var(--line);
+}
+
+.term {
+  display: grid;
+  gap: 0.35rem 1.5rem;
+  grid-template-columns: 8.5rem minmax(0, 1fr);
+  padding-block: 0.9rem;
+  border-block-start: 1px solid var(--line);
+}
+
+.term dt {
+  color: var(--accent);
+  font-size: 0.78rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.term dd {
+  margin-inline-start: 0;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+
+.pull {
+  padding-inline-start: 1.25rem;
+  border-inline-start: 2px solid var(--accent);
+  font-family: var(--font-serif);
+  line-height: 1.3;
+}
+
+.aside {
+  margin-block-start: 1rem;
+  padding-block: 1.25rem;
+  padding-inline: 1.35rem;
+  border: 1px solid var(--line);
+  background-color: var(--panel);
+}
+
+.aside h3 {
+  margin-block-end: 0.5rem;
+  font-size: 0.95rem;
+}
+
+.aside p {
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+/* ---------- footer ---------- */
+
+.footer {
+  padding-block: 2.25rem 3rem;
+  border-block-start: 1px solid var(--line);
+}
+
+.footer p {
+  max-inline-size: 78ch;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.footer p + p {
+  margin-block-start: 0.6rem;
+}
+
+/* ---------- narrow ---------- */
+
+@media (width <= 46rem) {
+  .term {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ledger-row {
+    gap: 0.3rem;
+    grid-template-columns: 2.6rem repeat(3, minmax(0, 1fr));
+  }
+
+  .ledger-tick,
+  .ledger-cell {
+    font-size: 0.66rem;
+  }
+
+  .transport {
+    align-items: flex-start;
+    justify-content: flex-start;
+    margin-block: 1rem;
+  }
+
+  .hero {
+    padding-block: 1.75rem 1.25rem;
+  }
+
+  .hero-inner {
+    gap: 1rem;
+  }
+}
+
+/* The dials update once per tick, which is motion whether or not it is
+   animated. Under a reduced-motion preference the simulation starts paused
+   (see simulator.ts) and nothing eases. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+  }
+}

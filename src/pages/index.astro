@@ -1,31 +1,342 @@
 ---
+import {
+  AGILITY_AT_FLOOR,
+  AGILITY_MAX,
+  AGILITY_MIN,
+  ATTACK_RANK,
+  TICK_SPEED_FLOOR,
+  createSim,
+  pendingReset,
+  tickSpeed,
+  type CombatantConfig,
+} from "../lib/ctb.ts";
+import { dialTicksMarkup, notchAngle, remainingArc } from "../lib/dial.ts";
 import "../styles/global.css";
+
+// The roster is rendered at build time and read back out of the markup by the
+// client script, so the page is coherent at tick 0 before any JS runs and the
+// tests can drive the real wiring against the real HTML.
+const roster: readonly CombatantConfig[] = [
+  { id: "a", name: "Unit A", agility: 44, haste: "normal" },
+  { id: "b", name: "Unit B", agility: 98, haste: "normal" },
+  { id: "c", name: "Unit C", agility: AGILITY_AT_FLOOR, haste: "normal" },
+];
+
+const start = createSim(roster);
+const letters = ["A", "B", "C"];
 ---
 
 <html lang="en-AU">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>COMP4020 prototype</title>
+    <meta
+      name="description"
+      content="Haste in Final Fantasy X does not make your counter tick down faster. An interactive dial instrument showing what it actually changes."
+    />
+    <title>Haste doesn&rsquo;t speed up the clock &mdash; an FFX turn-order instrument</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400..600&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap"
+    />
   </head>
+
   <body>
-    <header>
-      <nav aria-label="Primary">
-        <a href="./">Home</a>
-      </nav>
+    <header class="topbar">
+      <div class="wrap topbar-inner">
+        <p class="topbar-mark">CTB&nbsp;/&nbsp;counter&nbsp;instrument</p>
+        <nav aria-label="Sections of this page">
+          <a href="#instrument">The instrument</a>
+          <a href="#mechanism">The mechanism</a>
+        </nav>
+      </div>
     </header>
+
     <main>
-      <h1>COMP4020 prototype</h1>
-      <p data-testid="intro">
-        Replace this with your prototype. This week's brief is on the course website;
-        <code>spec/README.md</code> explains how the checks in this repo relate to it.
-      </p>
+      <section class="hero">
+        <div class="wrap hero-inner">
+          <p class="eyebrow">Final Fantasy X &middot; Conditional Turn-Based system</p>
+          <h1>
+            You&rsquo;d think Haste speeds up the clock.
+            <span class="hero-turn">It doesn&rsquo;t.</span>
+          </h1>
+          <div class="hero-copy">
+            <p class="hero-lede">
+              Every combatant carries a counter, and one global tick drops
+              <em>every</em> counter by exactly 1 &mdash; same moment, same amount, for
+              everyone on the field. Haste never touches that rate. It halves the
+              number the counter <em>resets to</em> after you act. Identical result
+              from the outside, a completely different machine underneath.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section class="instrument" id="instrument" data-sim aria-labelledby="instrument-heading">
+        <div class="wrap">
+          <div class="section-head">
+            <h2 id="instrument-heading">Three counters, one clock</h2>
+            <p class="section-lede">
+              One tooth on the ring is one tick, the bright arc is what this unit has
+              left, and it acts when the notch reaches the index mark at the top. Switch
+              Haste on and watch what does &mdash; and doesn&rsquo;t &mdash; change.
+            </p>
+          </div>
+
+          <div class="transport">
+            <div class="transport-buttons">
+              <button type="button" class="button" data-play>Pause</button>
+              <button type="button" class="button" data-step>Step one tick</button>
+              <button type="button" class="button" data-reset>Reset</button>
+            </div>
+            <p class="transport-tick">
+              <span class="transport-tick-label">global tick</span>
+              <span class="num transport-tick-value" data-global-tick>0</span>
+            </p>
+          </div>
+
+          <p class="visually-hidden" role="status" data-status></p>
+
+          <div class="channels">
+            {
+              start.combatants.map((unit, index) => {
+                const letter = letters[index] ?? unit.id.toUpperCase();
+                const speed = tickSpeed(unit.agility);
+                const next = pendingReset(unit);
+                return (
+                  <article
+                    class="channel"
+                    data-unit={unit.id}
+                    data-name={unit.name}
+                    data-letter={letter}
+                    data-hasted="false"
+                    data-acting="false"
+                    data-pending="false"
+                  >
+                    <div class="channel-head">
+                      <h3 class="channel-name">
+                        <span class="channel-letter num">{letter}</span>
+                        {unit.name}
+                      </h3>
+                      <button
+                        type="button"
+                        class="haste-toggle"
+                        role="switch"
+                        aria-checked="false"
+                        data-haste
+                      >
+                        <span class="haste-track" aria-hidden="true">
+                          <span class="haste-knob" />
+                        </span>
+                        <span class="haste-word">Haste</span>
+                        <span class="visually-hidden">for {unit.name}</span>
+                      </button>
+                    </div>
+
+                    <div class="dial-wrap">
+                      <svg
+                        class="dial"
+                        viewBox="0 0 100 100"
+                        aria-hidden="true"
+                        focusable="false"
+                        data-dial
+                      >
+                        <circle class="dial-track" cx="50" cy="50" r="41" />
+                        <path class="dial-arc" d={remainingArc(unit.counter, unit.cycle)} data-dial-arc />
+                        <g
+                          class="dial-ticks"
+                          data-dial-ticks
+                          data-cycle={String(unit.cycle)}
+                          set:html={dialTicksMarkup(unit.cycle)}
+                        />
+                        <circle class="dial-bezel" cx="50" cy="50" r="28" />
+                        <path class="dial-index" d="M 50 8 L 46.6 0.9 L 53.4 0.9 Z" />
+                        <g
+                          class="dial-notch"
+                          data-dial-notch
+                          transform={`rotate(${notchAngle(unit.counter, unit.cycle, unit.turns)} 50 50)`}
+                        >
+                          <line x1="50" y1="7" x2="50" y2="27" />
+                          <circle cx="50" cy="7" r="1.9" />
+                        </g>
+                      </svg>
+                      <p class="dial-readout">
+                        <span class="num dial-counter" data-counter>{unit.counter}</span>
+                        <span class="dial-unit">ticks left</span>
+                      </p>
+                    </div>
+
+                    <p class="channel-turns">
+                      <span class="channel-turns-label">turns taken</span>
+                      <span class="num channel-turns-value" data-turns>0</span>
+                    </p>
+
+                    <div class="control">
+                      <div class="control-head">
+                        <label for={`agility-${unit.id}`}>
+                          Agility<span class="visually-hidden"> for {unit.name}</span>
+                        </label>
+                        <span class="num control-value" data-agility-value>{unit.agility}</span>
+                      </div>
+                      <input
+                        type="range"
+                        id={`agility-${unit.id}`}
+                        min={AGILITY_MIN}
+                        max={AGILITY_MAX}
+                        step="1"
+                        value={unit.agility}
+                        aria-valuetext={`${unit.agility} agility, tick speed ${speed}`}
+                        data-agility
+                      />
+                    </div>
+
+                    <p class="formula">
+                      <span class="formula-label">next reset</span>
+                      <span class="formula-expr num">
+                        <span data-tickspeed>{speed}</span>
+                        <span class="formula-op">&times;</span>
+                        {ATTACK_RANK}
+                        <span class="formula-op">&times;</span>
+                        <span class="haste-factor" data-haste-factor>
+                          1
+                        </span>
+                        <span class="formula-op">=</span>
+                        <span class="formula-result" data-next-reset>
+                          {next}
+                        </span>
+                      </span>
+                      <span class="formula-pending">not until this unit&rsquo;s next turn</span>
+                    </p>
+                  </article>
+                );
+              })
+            }
+          </div>
+
+          <section class="ledger-block" aria-labelledby="ledger-heading">
+            <h3 id="ledger-heading">Global tick ledger</h3>
+            <p class="ledger-note">
+              Newest tick first. Every row reads <span class="num">&minus;1</span> for
+              every unit, hasted or not &mdash; that is the rate, and nothing on this
+              page can change it. A value in brackets is a counter that hit&nbsp;0 and
+              was reset.
+            </p>
+            <ol class="ledger" data-ledger></ol>
+            <p class="ledger-empty">
+              Nothing recorded yet &mdash; press Play, or Step one tick.
+            </p>
+          </section>
+        </div>
+      </section>
+
+      <section class="mechanism" id="mechanism" aria-labelledby="mechanism-heading">
+        <div class="wrap">
+          <div class="mechanism-inner">
+            <h2 id="mechanism-heading">What&rsquo;s actually happening</h2>
+
+            <p>
+              Final Fantasy X doesn&rsquo;t run a clock per character. It runs one global
+              tick, and on every tick it performs a single subtraction against every
+              combatant on the field: counter minus one. There is no per-character rate to
+              speed up, which is why the ledger above never shows anything other than
+              &minus;1.
+            </p>
+
+            <p class="lead-out">What Haste changes is where the counter starts.</p>
+
+            <p class="equation num">
+              counter <span class="formula-op">=</span>
+              <span class="equation-rhs"
+                >tick&nbsp;speed <span class="formula-op">&times;</span> rank
+                <span class="formula-op">&times;</span> haste</span
+              >
+            </p>
+
+            <dl class="terms">
+              <div class="term">
+                <dt>tick speed</dt>
+                <dd>
+                  Derived from Agility, in bands. Lower is faster, because it is a
+                  multiplier on the counter, not a speed.
+                </dd>
+              </div>
+              <div class="term">
+                <dt>rank</dt>
+                <dd>
+                  How heavy the action was. Attack is rank <span class="num">{ATTACK_RANK}</span>,
+                  and rank <span class="num">{ATTACK_RANK}</span> is what the game&rsquo;s
+                  own turn forecast assumes for everyone&rsquo;s next move. It is the only
+                  rank modelled here.
+                </dd>
+              </div>
+              <div class="term">
+                <dt>haste</dt>
+                <dd>
+                  <span class="num">&times;1</span> normally,
+                  <span class="num haste-factor">&times;1/2</span> under Haste,
+                  <span class="num">&times;2</span> under Slow. Rounded down.
+                </dd>
+              </div>
+            </dl>
+
+            <p>
+              So a unit at tick speed <span class="num">4</span> attacking normally waits
+              <span class="num">4 &times; 3 &times; 1 = 12</span> ticks between turns, and
+              the same unit under Haste waits <span class="num">4 &times; 3 &times; 1/2 = 6</span>.
+              Twice as many turns, and not one tick of it came from the counter draining
+              faster.
+            </p>
+
+            <p class="pull">
+              On the dials that difference is literal. Haste doesn&rsquo;t spin the needle
+              faster &mdash; it takes half the teeth off the ring.
+            </p>
+
+            <p>
+              It is also why toggling Haste mid-battle appears to do nothing at first.
+              The live counter is untouched; the unit finishes the cycle it was already
+              in at the same one-per-tick it was already going, and only the reset on the
+              far side comes back halved. If Haste really were a clock speed, that pause
+              couldn&rsquo;t exist.
+            </p>
+
+            <aside class="aside" aria-labelledby="floor-heading">
+              <h3 id="floor-heading">A second thing worth noticing</h3>
+              <p>
+                Drag any unit&rsquo;s Agility past <span class="num">{AGILITY_AT_FLOOR}</span> and
+                the reset stops moving. Tick speed bottoms out at
+                <span class="num">{TICK_SPEED_FLOOR}</span> there, so the last
+                <span class="num">{AGILITY_MAX - AGILITY_AT_FLOOR}</span> points of the stat
+                buy nothing at all past the opening turn.
+              </p>
+            </aside>
+          </div>
+        </div>
+      </section>
     </main>
+
+    <footer class="footer">
+      <div class="wrap">
+        <p>
+          Mechanics from the community documentation of FFX&rsquo;s battle system
+          &mdash; SinirothX and SClemmons, &ldquo;Stat Mechanics FAQ&rdquo;, which gives
+          the reset as [tick&nbsp;speed &times; rank &times; haste status], the brackets
+          meaning rounded down.
+        </p>
+        <p>
+          An unofficial explainer, not affiliated with or endorsed by Square Enix. No
+          game assets are used: every mark on this page is CSS and SVG drawn from
+          scratch, and the combatants are invented.
+        </p>
+      </div>
+    </footer>
+
     <script>
-      const intro = document.querySelector<HTMLElement>('[data-testid="intro"]');
-      if (intro) {
-        intro.dataset.ready = "true";
-      }
+      import { initSimulator } from "../lib/simulator.ts";
+
+      initSimulator(document);
     </script>
   </body>
 </html>

@@ -147,6 +147,17 @@ rendering the right page at the right size. Both failed here in one session.
   `getBoundingClientRect().right` exceeds the width. A number beats a screenshot.
   Cross-origin (a different port) yields a null `contentDocument` and a probe
   that silently reports nothing.
+- **The shell here is zsh, which does not word-split unquoted variables.**
+  `set -- $spec` with `spec="390 520"` gives *one* argument, not two, so a loop
+  that is correct in bash quietly passes `--window-size=,900`. Chrome ignores
+  the malformed flag, lays out at its own default width, and the probe reports
+  confident numbers for a viewport you never tested. Split explicitly
+  (`${=spec}`) or use separate variables.
+- **Drive the page from the probe rather than screenshotting a live one.** Have
+  the harness page pause the simulation, reset it, and step a fixed number of
+  ticks before measuring, so two runs are comparable. Give the harness page a
+  loud background colour (`#f0f`) --- it makes the boundary of the real
+  viewport unmistakable instead of blending into the page's own dark ground.
 
 ## Accessibility sensors
 
@@ -155,6 +166,27 @@ honest about what each tool actually covers.
 
 - `axe-core` runs over the built HTML under jsdom and catches structural
   problems (landmarks, labels, heading order, duplicate ids).
+- **Run axe *inside* the jsdom realm, not against it.** Construct the DOM with
+  `runScripts: "dangerously"`, `dom.window.eval(readFileSync(require.resolve("axe-core")))`,
+  then call `dom.window.axe.run(dom.window.document, …)`. The alternative is
+  shimming a dozen browser globals onto `globalThis` and it breaks on every axe
+  upgrade. Pass a `VirtualConsole` to swallow jsdom's complaints about module
+  scripts it can't execute.
+- **Check the sensor is actually looking.** A green axe run and a run that
+  silently loaded nothing look identical from the test output. Print
+  `results.passes.length` once: this page reports 37 rules passing, so zero
+  violations means something. `landmark-one-main` and `page-has-heading-one`
+  come back *incomplete* under jsdom because visibility needs layout --- the
+  invariants already assert both, so that gap is covered elsewhere, not ignored.
+- **Chrome has `--force-prefers-reduced-motion`.** Use it to verify the
+  reduced-motion path renders what you think it does, rather than trusting the
+  media query by inspection.
+- A control's accessible name has to distinguish it from its siblings. Three
+  sliders all named "Agility" are three identical announcements; append a
+  visually hidden `for Unit A` so the name is "Agility for Unit A".
+- Don't reach for `<output>` as a read-only value display. Its implicit role is
+  `status`, so it is a live region, and it will double-announce every value the
+  control it mirrors already reports. A plain `<span>` is correct.
 - **axe cannot judge contrast under jsdom** — no layout, no computed colour, so
   `color-contrast` returns "incomplete" for every node. Disable that rule
   explicitly and check the palette arithmetically instead; leaving it enabled
@@ -172,7 +204,44 @@ honest about what each tool actually covers.
   `.wrap`'s horizontal padding to `0`. Use `padding-block` / `padding-inline`.
 - Declare lower-specificity selectors before higher ones or stylelint's
   `no-descending-specificity` fails (e.g. `.inline-list li` must come before
-  `.menu-list li:last-child`).
+  `.menu-list li:last-child`). This bites across *sections* too: a
+  `.mechanism .haste-factor` written down in the prose block still has to
+  precede `.channel[data-hasted="true"] .haste-factor` written up in the
+  components block.
+- **Same trap as the shorthand one, different property: don't put
+  `max-inline-size` on an element that already carries `.wrap`.** `.wrap`
+  centres its own box with `margin-inline: auto`, so narrowing it centres the
+  narrow column and silently breaks the left edge every other section shares.
+  Nest a child (`<div class="wrap"><div class="prose">`) instead.
+- **stylelint-config-standard rejects BEM.** `selector-class-pattern` is
+  kebab-case only, so `channel__name` and `channel--hasted` both fail. Use
+  `channel-name`, and state classes like `.is-acting` or a `data-` attribute.
+- **Media queries must use range notation** (`media-feature-range-notation:
+  context`): `@media (width <= 46rem)`, never `(max-width: 46rem)`.
+- Alpha values are percentages (`opacity: 50%`), colour functions are modern
+  (`rgb(0 0 0 / 50%)`), and a blank line between two declarations inside one
+  rule fails `declaration-empty-line-before`.
+
+## Typography
+
+- **IBM Plex Mono squashes U+00BD (`½`) into a single monospace cell** and it
+  renders as an illegible smudge next to a `×`. Write `1/2` --- three cells,
+  legible, and it matches how the source documentation writes it.
+- Reserve the mono face for values the page actually computes. Once it is also
+  used for eyebrows and labels it stops meaning "this is a measured number".
+
+## TypeScript on this template
+
+- **Flow narrowing does not reach hoisted `function` declarations.**
+  `const root = doc.querySelector(…); if (!root) return;` still leaves `root`
+  possibly-null inside a `function foo()` declared further down, because the
+  compiler can't prove the function isn't called before the guard. Re-bind with
+  an explicit annotation (`const root: HTMLElement = found;`) rather than
+  reaching for `!`.
+- **`types: ["node"]` means a bare `setInterval` is Node's**, which returns a
+  `Timeout`. `window.setInterval` returns a `number`. Type the handle
+  `number | null` when you call it through `document.defaultView`.
+- `verbatimModuleSyntax` is on, so type-only imports must say `import type`.
 
 ## Your process is part of the mark
 
