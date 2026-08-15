@@ -114,6 +114,66 @@ generators (Astro included) need `base` set explicitly, and getting it wrong
 looks fine locally while every asset 404s on the live URL. And commit the
 updated `pnpm-lock.yaml`: CI installs with `--frozen-lockfile`.
 
+## Astro on this template (learned in crit 2)
+
+- **Use relative URLs, not `base`.** Setting Astro's `base` to the repo name
+  makes assets resolve once deployed but breaks the links check, which crawls
+  `dist/` as the site root and sees `/<repo>/…` as a 404. Relative URLs are
+  correct in both places. The config that does it:
+  `build: { format: "file", assetsPrefix: "." }`. `format: "file"` is what makes
+  it work — every page lands at the top level of `dist/`, so `./menu.html` means
+  the same thing from every page; with the default directory format each page
+  sits a level deeper and would need its own `../`.
+- `astro check` replaces `tsc --noEmit` as the typecheck script.
+- Astro's image pipeline pulls in `sharp`, which needs
+  `allowBuilds: { sharp: true }` in `pnpm-workspace.yaml` or install warns.
+
+## Verifying the rendered page
+
+The rendered page is ground truth --- but only if you've checked you're
+rendering the right page at the right size. Both failed here in one session.
+
+- **The shell's working directory resets between commands.** `serve dist` without
+  an explicit path silently served *last week's repo*. Always pass an absolute
+  path: `python3 -m http.server 8099 --directory "$PWD/dist"`.
+- **Chrome's headless mode enforces a ~500px minimum window.** `--window-size=390,844`
+  lays the page out at 500px and then *crops* the screenshot to 390, which looks
+  exactly like horizontal overflow that isn't there. Don't fix a bug you've only
+  seen in a picture.
+- **To measure a real phone viewport**, load the page in a **same-origin** iframe
+  (`<iframe src="./index.html" style="width:390px">`) — an iframe gets its own
+  viewport *and* its own media-query context — then read
+  `document.documentElement.scrollWidth` and flag any element whose
+  `getBoundingClientRect().right` exceeds the width. A number beats a screenshot.
+  Cross-origin (a different port) yields a null `contentDocument` and a probe
+  that silently reports nothing.
+
+## Accessibility sensors
+
+Nothing in the starter measures accessibility, so wire it yourself --- and be
+honest about what each tool actually covers.
+
+- `axe-core` runs over the built HTML under jsdom and catches structural
+  problems (landmarks, labels, heading order, duplicate ids).
+- **axe cannot judge contrast under jsdom** — no layout, no computed colour, so
+  `color-contrast` returns "incomplete" for every node. Disable that rule
+  explicitly and check the palette arithmetically instead; leaving it enabled
+  looks like coverage you don't have.
+- Every `<h1>` must sit inside a landmark. A full-bleed hero placed between
+  `<header>` and `<main>` trips axe's `region` rule — put it inside `<main>`.
+- A colour token that's legible on one background is not legible on all of them.
+  When a class is used on both the dark hero and the light page, scope the
+  bright variant to the hero and make the *dark* value the default.
+
+## CSS conventions
+
+- Don't use the `padding` / `margin` shorthand on a class that shares an element
+  with a layout class --- `padding: 2.5rem 0 4rem` on `.page` silently reset
+  `.wrap`'s horizontal padding to `0`. Use `padding-block` / `padding-inline`.
+- Declare lower-specificity selectors before higher ones or stylelint's
+  `no-descending-specificity` fails (e.g. `.inline-list li` must come before
+  `.menu-list li:last-child`).
+
 ## Your process is part of the mark
 
 The deployed page is only half of it. How you got there is marked too: your
