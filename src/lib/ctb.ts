@@ -14,6 +14,14 @@
  * (SinirothX & SClemmons, "Stat Mechanics FAQ", GameFAQs / Neoseeker), which
  * gives the reset as [Tick Speed x Rank x Haste Status], square brackets
  * meaning rounded down.
+ *
+ * ONE DELIBERATE OMISSION. In the real game a successful Haste cast also halves
+ * the target's *current* counter, an immediate partial catch-up on top of the
+ * smaller future reset. This model leaves it out, and setHaste() below is
+ * explicit about that. The catch-up is a one-off nudge; the reset multiplier is
+ * the part that proves Haste isn't a faster clock, and modelling it on its own
+ * is what makes the "nothing happens until your next turn" pause observable.
+ * The page says so in as many words — see the note in the mechanism section.
  */
 
 /** The status multipliers that scale a counter reset. Haste is the point. */
@@ -190,6 +198,10 @@ function update(
  * Toggle Haste mid-battle. It leaves `counter` and `cycle` alone on purpose:
  * nothing at all happens until this combatant's next turn, and then the counter
  * comes back half the size. That delay is the evidence.
+ *
+ * The real game would also halve `counter` here (see the omission noted at the
+ * top of this file). Adding that back is a one-line change — but it would hide
+ * the pause this page exists to show, so don't do it by accident.
  */
 export function setHaste(state: SimState, id: string, haste: HasteState): SimState {
   return update(state, id, (c) => ({ ...c, haste }));
