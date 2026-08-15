@@ -840,15 +840,49 @@ h3 {
   .transport {
     align-items: flex-start;
     justify-content: flex-start;
-    margin-block: 1rem;
+    margin-block: 0.6rem;
+    padding-block: 0.6rem;
+  }
+
+  /* The hero carries the whole claim, so none of it can be cut. Instead the
+     phone breakpoint tightens the space around it and steps the headline down
+     one size, which is enough to keep the transport controls above the fold at
+     390x844 without touching a word. */
+  .topbar-inner {
+    padding-block: 0.65rem;
   }
 
   .hero {
-    padding-block: 1.75rem 1.25rem;
+    padding-block: 1.1rem 0.8rem;
   }
 
   .hero-inner {
-    gap: 1rem;
+    gap: 0.7rem;
+  }
+
+  .eyebrow {
+    letter-spacing: 0.08em;
+  }
+
+  h1 {
+    font-size: 1.7rem;
+  }
+
+  .hero-lede {
+    font-size: 0.95rem;
+    line-height: 1.5;
+  }
+
+  .instrument {
+    padding-block: 0.25rem clamp(3rem, 6vw, 5rem);
+  }
+
+  .section-head {
+    gap: 0.4rem;
+  }
+
+  .section-lede {
+    line-height: 1.5;
   }
 }
 
